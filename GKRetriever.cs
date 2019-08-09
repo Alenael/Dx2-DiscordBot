@@ -281,7 +281,7 @@ namespace Dx2_DiscordBot
             fixedFactionName = HttpUtility.UrlEncode(fixedFactionName);
 
             //Completes the URL
-            fixedFactionName = "?guild_name=" + fixedFactionName.Replace(" ", "+") + "&x=59&y=28&search_flg=1&lang=1";
+            fixedFactionName = "?guild_name=" + fixedFactionName.Replace(" ", "+") + "&x=59&y=28&search_flg=1&lang=1&search_count=2";
 
             return fixedFactionName;
         }
