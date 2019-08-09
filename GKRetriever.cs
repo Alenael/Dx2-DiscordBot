@@ -221,7 +221,8 @@ namespace Dx2_DiscordBot
                 foreach (var f in factions)
                 {
                     if (f.Name != factionName) continue;
-                    message += f.Rank + " | " + f.Name + " | " + f.Damage + "\n";
+                    //message += f.Rank + " | " + f.Name + " | " + f.Damage + "\n";
+                    message += "Total: " + f.rank_total + " | Phantoms: " + f.rank_phantoms + " | Shadows: " + f.rank_shadows + " | Mou-Ryo: " + f.rank_mr + "\n";
                     break;
                 }
             }
@@ -261,7 +262,8 @@ namespace Dx2_DiscordBot
         private List<Faction> GetFactions(string factionName = "")
         {
             var web = new HtmlWeb();
-            var htmlDoc = web.Load("https://ad2r-sim.mobile.sega.jp/socialsv/webview/GuildEventRankingView.do" + CleanFactionName(factionName));
+            //var htmlDoc = web.Load("https://ad2r-sim.mobile.sega.jp/socialsv/webview/GuildEventRankingView.do" + CleanFactionName(factionName));
+            var htmlDoc = web.Load("https://d2r-sim.mobile.sega.jp/socialsv/webview/GuildDevilDefeatEventRankingView.do" + CleanFactionName(factionName));
             return ReadRankings(htmlDoc);
         }
 
@@ -288,7 +290,15 @@ namespace Dx2_DiscordBot
         private List<Faction> ReadRankings(HtmlDocument htmlDoc)
         {
             var factions = new List<Faction>();
+            string rank_total = "";
+            string rank_phantom = "";
+            string rank_shadow = "";
+            string rank_mr = "";
+            string name = "";
 
+
+            #region Old GK Events
+            /*
             var otherNodes = htmlDoc.DocumentNode.SelectNodes("//tr");
             var damageNodes = htmlDoc.DocumentNode.SelectNodes("//p[@class='dmgStr']");
 
@@ -309,6 +319,103 @@ namespace Dx2_DiscordBot
                     });
             }
 
+            */
+            #endregion
+
+            #region More-Ryo Event!
+            
+            //Get total Rankings
+            HtmlNode layer0 = htmlDoc.GetElementbyId("Layer0");
+            
+            int tablecount = 0;
+            foreach(HtmlNode child in layer0.ChildNodes )
+            {
+                //All results are saved into tables, only 5 are displayed
+                if(child.Name.Equals("table"))
+                {
+                    tablecount++;
+                    //Searched faction is in the middle of the 5 displayed factions
+                    if (tablecount == 3)
+                    {
+                        //Table->tr->td->text
+                        rank_total = child.ChildNodes[1].ChildNodes[1].InnerHtml;
+                        //Read name
+                        name = child.ChildNodes[1].ChildNodes[3].ChildNodes[1].InnerHtml;
+                    }
+                }
+            }
+
+            //Get Phantom Rankings
+            HtmlNode layer1 = htmlDoc.GetElementbyId("Layer1");
+            
+            tablecount = 0;
+            foreach (HtmlNode child in layer1.ChildNodes)
+            {
+                //All results are saved into tables, only 5 are displayed
+                if (child.Name.Equals("table"))
+                {
+                    tablecount++;
+                    //Searched faction is in the middle of the 5 displayed factions
+                    if (tablecount == 3)
+                    {
+                        //Table->tr->td->text
+                        rank_phantom = child.ChildNodes[1].ChildNodes[1].InnerHtml;
+                        
+                    }
+                }
+            }
+
+            //Get Shadow Rankings
+            HtmlNode layer2 = htmlDoc.GetElementbyId("Layer2");
+            
+            tablecount = 0;
+            foreach (HtmlNode child in layer2.ChildNodes)
+            {
+                //All results are saved into tables, only 5 are displayed
+                if (child.Name.Equals("table"))
+                {
+                    tablecount++;
+                    //Searched faction is in the middle of the 5 displayed factions
+                    if (tablecount == 3)
+                    {
+                        //Table->tr->td->text
+                        rank_shadow = child.ChildNodes[1].ChildNodes[1].InnerHtml;
+                    }
+                }
+            }
+
+            //Get Mou-Ryo Rankings
+            HtmlNode layer3 = htmlDoc.GetElementbyId("Layer3");
+            
+            tablecount = 0;
+            foreach (HtmlNode child in layer3.ChildNodes)
+            {
+                //All results are saved into tables, only 5 are displayed
+                if (child.Name.Equals("table"))
+                {
+                    tablecount++;
+                    //Searched faction is in the middle of the 5 displayed factions
+                    if (tablecount == 3)
+                    {
+                        //Table->tr->td->text
+                        rank_mr = child.ChildNodes[1].ChildNodes[1].InnerHtml;
+                    }
+                }
+            }
+            
+            factions.Add(
+                    new Faction()
+                    {
+                        Rank = "",
+                        rank_mr = rank_mr,
+                        rank_phantoms = rank_phantom,
+                        rank_shadows = rank_shadow,
+                        rank_total = rank_total,
+                        Name = name,
+                        Damage = ""
+                    });
+            #endregion
+
             return factions;
         }
 
@@ -321,6 +428,10 @@ namespace Dx2_DiscordBot
     public struct Faction
     {
         public string Rank;
+        public string rank_total;
+        public string rank_shadows;
+        public string rank_phantoms;
+        public string rank_mr;
         public string Name;
         public string Damage;
     }

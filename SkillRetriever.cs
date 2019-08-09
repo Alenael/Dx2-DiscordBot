@@ -36,6 +36,7 @@ namespace Dx2_DiscordBot
         public async override Task ReadyAsync()
         {
             var skillDt = await GetCSV("https://raw.githubusercontent.com/Alenael/Dx2DB/master/csv/SMT Dx2 Database - Skills.csv");            
+            //var skillDt = await GetCSV("https://raw.githubusercontent.com/Maaster/Dx2DB/master/csv/SMT Dx2 Database - Skills.csv");
 
             var tempSkills = new List<Skill>();
             foreach (DataRow row in skillDt.Rows)
@@ -237,6 +238,7 @@ namespace Dx2_DiscordBot
         public string Element;
         public string Cost;
         public string Description;
+        public string Levels;
         public string Target;
         public string Sp;
         public string LearnedBy;
@@ -257,6 +259,7 @@ namespace Dx2_DiscordBot
                 Sp = "-";
 
             Description = Description.Replace("\\n", "\n") + TransferrableFrom;
+            Levels = Levels.Replace("\\n", "\n");
 
             var url = "https://dx2wiki.com/index.php/" + Uri.EscapeDataString(Name);
             var thumbnail = "https://teambuilder.dx2wiki.com/Images/Spells/" + Uri.EscapeDataString(Element) + ".png";
@@ -268,7 +271,7 @@ namespace Dx2_DiscordBot
             eb.AddField("Cost: ", Cost, true);
             eb.AddField("Target: ", Target, true);
             eb.AddField("Sp: ", Sp, true);
-            eb.WithDescription(Description);
+            eb.WithDescription(Description + "\n");
             eb.WithUrl(url);
             eb.WithThumbnailUrl(thumbnail);
             return eb.Build();
