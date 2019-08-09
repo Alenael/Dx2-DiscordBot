@@ -68,7 +68,7 @@ namespace Dx2_DiscordBot
         //Initialization
         public async override Task ReadyAsync()
         {
-            await GatherTopAsync();
+            //await GatherTopAsync();
         }
 
         //Recieve Messages here
