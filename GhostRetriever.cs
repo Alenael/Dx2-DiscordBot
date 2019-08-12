@@ -16,10 +16,10 @@ namespace Dx2_DiscordBot
     /// <summary>
     /// This class is responsible for refreshing our apps data on an interval and posting a message to Discord afterwards
     /// </summary>
-    public class GKRetriever : RetrieverBase
+    public class GhostRetriever : RetrieverBase
     {
         #region Properties
-        
+
         //Our Timer Object
         public Timer Timer;
 
@@ -27,8 +27,8 @@ namespace Dx2_DiscordBot
         private static readonly HttpClient client = new HttpClient();
 
         //List of our Factions
-        private List<List<Faction>> Factions = new List<List<Faction>>();
-        
+        private List<List<GhostFaction>> Factions = new List<List<GhostFaction>>();
+
         #endregion
 
         #region Constructor
@@ -36,7 +36,7 @@ namespace Dx2_DiscordBot
         /// <summary>
         /// Creates our Timer and executes it
         /// </summary>
-        public GKRetriever(DiscordSocketClient client) : base (client)
+        public GhostRetriever(DiscordSocketClient client) : base(client)
         {
             MainCommand = "!gk";
 
@@ -55,7 +55,7 @@ namespace Dx2_DiscordBot
             var currentTime = new DateTime(1, 1, 1, DateTime.Now.Hour, DateTime.Now.Minute, 0);
             var interval = futureTime.Subtract(currentTime).TotalMilliseconds;
             Logger.LogAsync("Time Until Next Update: " + interval);
-            
+
             Timer = new Timer(interval);
             Timer.Elapsed += OnTimedEvent;
             Timer.AutoReset = true;
@@ -96,7 +96,7 @@ namespace Dx2_DiscordBot
                         return;
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     if (_client.GetChannel(channelId) is IMessageChannel chnl)
                         await chnl.SendMessageAsync("Could not understand: " + items[1]);
@@ -113,21 +113,22 @@ namespace Dx2_DiscordBot
                     {
                         ranking = items[1];
 
-                        if(!(ranking.Equals("Total") || ranking.Equals("Phantom") || ranking.Equals("Shadow") || ranking.Equals("Myo-Ryu")))
+                        if (!(ranking.Equals("Total") || ranking.Equals("Phantom") || ranking.Equals("Shadow") || ranking.Equals("Myo-Ryu")))
                         {
                             if (_client.GetChannel(channelId) is IMessageChannel chnl)
                                 await chnl.SendMessageAsync("Please specify your ranking after " + items[0] + " , with either Total, Phantom, Shadow or Myo-Ryu");
                             return;
                         }
 
-                    }catch(Exception e)
+                    }
+                    catch (Exception e)
                     {
                         if (_client.GetChannel(channelId) is IMessageChannel chnl)
                             await chnl.SendMessageAsync("Please specify your ranking after " + items[0] + " , with either Total, Phantom, Shadow or Myo-Ryu");
                         return;
                     }
 
-                    await PostRankingsAsync(top, channelId, serverName,ranking);
+                    await PostRankingsAsync(top, channelId, serverName, ranking);
                 }
                 else if (_client.GetChannel(channelId) is IMessageChannel chnl)
                     await chnl.SendMessageAsync("Could not understand: " + items[1]);
@@ -196,9 +197,9 @@ namespace Dx2_DiscordBot
                 message += "\n\n";
             }
             */
-            List<Faction> r = null;
+            List<GhostFaction> r = null;
 
-            switch(ranking)
+            switch (ranking)
             {
                 case "Total": r = Factions[0]; break;
                 case "Shadow": r = Factions[1]; break;
@@ -231,10 +232,10 @@ namespace Dx2_DiscordBot
                 for (var i = 0; i < message.Length;)
                 {
                     if (i + chunkSize > message.Length) chunkSize = message.Length - i;
-                    await chnl.SendMessageAsync("```md\n" + message.Substring(i, chunkSize)  +"```");
+                    await chnl.SendMessageAsync("```md\n" + message.Substring(i, chunkSize) + "```");
                     i += chunkSize;
                 }
-                
+
                 await Logger.LogAsync(factionName + " Recieved: " + message);
             }
             else
@@ -247,7 +248,7 @@ namespace Dx2_DiscordBot
         private async Task GatherTopAsync()
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            var tempFactions = new List<List<Faction>>();
+            var tempFactions = new List<List<GhostFaction>>();
             var factionsToGet = Convert.ToInt32(ConfigurationManager.AppSettings["topAmount"]);
 
             var factionName = "";
@@ -272,10 +273,10 @@ namespace Dx2_DiscordBot
                 */
         }
 
-        private List<List<Faction>> GetTopFactions()
+        private List<List<GhostFaction>> GetTopFactions()
         {
-            List<List<Faction>> factions = new List<List<Faction>>();
-            
+            List<List<GhostFaction>> factions = new List<List<GhostFaction>>();
+
             factions.Add(getTotalRanking());
             factions.Add(getShadowRanking());
             factions.Add(getPhantomRanking());
@@ -283,12 +284,12 @@ namespace Dx2_DiscordBot
 
 
             return factions;
-            
+
         }
 
-        private List<Faction> getMRRanking()
+        private List<GhostFaction> getMRRanking()
         {
-            List<Faction> tempFactions = new List<Faction>();
+            List<GhostFaction> tempFactions = new List<GhostFaction>();
 
             var factionsToGet = Convert.ToInt32(ConfigurationManager.AppSettings["topAmount"]);
 
@@ -296,7 +297,7 @@ namespace Dx2_DiscordBot
 
             while (tempFactions.Count < factionsToGet)
             {
-                var factions = GetFactions(true,"", "MR");
+                var factions = GetFactions(true, "", "MR");
                 if (factions == null)
                     break;
 
@@ -311,9 +312,9 @@ namespace Dx2_DiscordBot
             return tempFactions;
         }
 
-        private List<Faction> getTotalRanking()
+        private List<GhostFaction> getTotalRanking()
         {
-            List<Faction> tempFactions = new List<Faction>();
+            List<GhostFaction> tempFactions = new List<GhostFaction>();
 
             var factionsToGet = Convert.ToInt32(ConfigurationManager.AppSettings["topAmount"]);
 
@@ -321,7 +322,7 @@ namespace Dx2_DiscordBot
 
             while (tempFactions.Count < factionsToGet)
             {
-                var factions = GetFactions(true,"", "Total");
+                var factions = GetFactions(true, "", "Total");
                 if (factions == null)
                     break;
 
@@ -336,9 +337,9 @@ namespace Dx2_DiscordBot
             return tempFactions;
         }
 
-        private List<Faction> getPhantomRanking()
+        private List<GhostFaction> getPhantomRanking()
         {
-            List<Faction> tempFactions = new List<Faction>();
+            List<GhostFaction> tempFactions = new List<GhostFaction>();
 
             var factionsToGet = Convert.ToInt32(ConfigurationManager.AppSettings["topAmount"]);
 
@@ -346,7 +347,7 @@ namespace Dx2_DiscordBot
 
             while (tempFactions.Count < factionsToGet)
             {
-                var factions = GetFactions(true,"", "Phantom");
+                var factions = GetFactions(true, "", "Phantom");
                 if (factions == null)
                     break;
 
@@ -361,9 +362,9 @@ namespace Dx2_DiscordBot
             return tempFactions;
         }
 
-        private List<Faction> getShadowRanking()
+        private List<GhostFaction> getShadowRanking()
         {
-            List<Faction> tempFactions = new List<Faction>();
+            List<GhostFaction> tempFactions = new List<GhostFaction>();
 
             var factionsToGet = Convert.ToInt32(ConfigurationManager.AppSettings["topAmount"]);
 
@@ -371,7 +372,7 @@ namespace Dx2_DiscordBot
 
             while (tempFactions.Count < factionsToGet)
             {
-                var factions = GetFactions(true, "","Shadow");
+                var factions = GetFactions(true, "", "Shadow");
                 if (factions == null)
                     break;
 
@@ -399,7 +400,7 @@ namespace Dx2_DiscordBot
                 {
                     if (f.Name != factionName) continue;
                     //message += f.Rank + " | " + f.Name + " | " + f.Damage + "\n";
-                    message += "Total: " + f.rank_total +  " (Killed: " + f.Damage  + ") | Phantoms: " + f.rank_phantoms + " | Shadows: " + f.rank_shadows + " | Mou-Ryo: " + f.rank_mr + "\n";
+                    message += "Total: " + f.rank_total + " (Killed: " + f.Damage + ") | Phantoms: " + f.rank_phantoms + " | Shadows: " + f.rank_shadows + " | Mou-Ryo: " + f.rank_mr + "\n";
                     break;
                 }
             }
@@ -436,7 +437,7 @@ namespace Dx2_DiscordBot
         }
 
         //Gets 10 factions back at a time based on name provided
-        private List<Faction> GetFactions(bool getTop, string factionName = "", string ranking = "")
+        private List<GhostFaction> GetFactions(bool getTop, string factionName = "", string ranking = "")
         {
             var web = new HtmlWeb();
             //var htmlDoc = web.Load("https://ad2r-sim.mobile.sega.jp/socialsv/webview/GuildEventRankingView.do" + CleanFactionName(factionName));
@@ -449,9 +450,9 @@ namespace Dx2_DiscordBot
                 return ReadRankings(htmlDoc);
         }
 
-        private List<Faction> ReadTopRankings(HtmlDocument htmlDoc, string ranking)
+        private List<GhostFaction> ReadTopRankings(HtmlDocument htmlDoc, string ranking)
         {
-            List<Faction> factions = new List<Faction>();
+            List<GhostFaction> factions = new List<GhostFaction>();
 
             string rank = "";
             string name = "";
@@ -461,18 +462,18 @@ namespace Dx2_DiscordBot
             string id = "";
             int id_factor = -1;
 
-            switch(ranking)
+            switch (ranking)
             {
                 case "Total": id = "Layer0"; id_factor = 0; break;
                 case "Phantom": id = "Layer1"; id_factor = 1; break;
                 case "Shadow": id = "Layer2"; id_factor = 2; break;
                 case "MR": id = "Layer3"; id_factor = 3; break;
             }
-            
+
 
             //Get total Rankings
             HtmlNode layer0 = htmlDoc.GetElementbyId(id);
-            
+
             foreach (HtmlNode child in layer0.ChildNodes)
             {
                 if (child.Name.Equals("table"))
@@ -490,13 +491,13 @@ namespace Dx2_DiscordBot
                     dmg = allElementsWithClass[factions.Count + 10 * id_factor].InnerHtml;
 
                     factions.Add(
-                               new Faction()
+                               new GhostFaction()
                                {
                                    Rank = rank,
                                    Name = name,
                                    Damage = dmg,
                                    Leader = leader,
-                                   
+
                                });
                 }
                 /*
@@ -510,7 +511,7 @@ namespace Dx2_DiscordBot
                 }
                 */
 
-                
+
             }
 
 
@@ -538,9 +539,9 @@ namespace Dx2_DiscordBot
         }
 
         //Processes Rankings we pass to this and return them in a list
-        private List<Faction> ReadRankings(HtmlDocument htmlDoc)
+        private List<GhostFaction> ReadRankings(HtmlDocument htmlDoc)
         {
-            var factions = new List<Faction>();
+            var factions = new List<GhostFaction>();
             string rank_total = "";
             string rank_phantom = "";
             string rank_shadow = "";
@@ -575,15 +576,15 @@ namespace Dx2_DiscordBot
             #endregion
 
             #region More-Ryo Event!
-            
+
             //Get total Rankings
             HtmlNode layer0 = htmlDoc.GetElementbyId("Layer0");
-            
+
             int tablecount = 0;
-            foreach(HtmlNode child in layer0.ChildNodes )
+            foreach (HtmlNode child in layer0.ChildNodes)
             {
                 //All results are saved into tables, only 5 are displayed
-                if(child.Name.Equals("table"))
+                if (child.Name.Equals("table"))
                 {
                     tablecount++;
                     //Searched faction is in the middle of the 5 displayed factions
@@ -603,7 +604,7 @@ namespace Dx2_DiscordBot
 
             //Get Phantom Rankings
             HtmlNode layer1 = htmlDoc.GetElementbyId("Layer1");
-            
+
             tablecount = 0;
             foreach (HtmlNode child in layer1.ChildNodes)
             {
@@ -616,14 +617,14 @@ namespace Dx2_DiscordBot
                     {
                         //Table->tr->td->text
                         rank_phantom = child.ChildNodes[1].ChildNodes[1].InnerHtml;
-                        
+
                     }
                 }
             }
 
             //Get Shadow Rankings
             HtmlNode layer2 = htmlDoc.GetElementbyId("Layer2");
-            
+
             tablecount = 0;
             foreach (HtmlNode child in layer2.ChildNodes)
             {
@@ -642,7 +643,7 @@ namespace Dx2_DiscordBot
 
             //Get Mou-Ryo Rankings
             HtmlNode layer3 = htmlDoc.GetElementbyId("Layer3");
-            
+
             tablecount = 0;
             foreach (HtmlNode child in layer3.ChildNodes)
             {
@@ -660,7 +661,7 @@ namespace Dx2_DiscordBot
             }
 
             factions.Add(
-                    new Faction()
+                    new GhostFaction()
                     {
                         Rank = "",
                         rank_mr = rank_mr,
@@ -681,7 +682,7 @@ namespace Dx2_DiscordBot
     #region Structs
 
     // Small Struct to hold Faction Data
-    public struct Faction
+    public struct GhostFaction
     {
         public string Rank;
         public string Leader;
