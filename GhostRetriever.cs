@@ -297,16 +297,24 @@ namespace Dx2_DiscordBot
 
             while (tempFactions.Count < factionsToGet)
             {
-                var factions = GetFactions(true, "", "MR");
+                var factions = GetFactions(true, factionName, "MR");
                 if (factions == null)
                     break;
 
                 foreach (var faction in factions)
-                    if (!tempFactions.Contains(faction) && tempFactions.Count <= factionsToGet)
+                    if (!tempFactions.Any(f => f.Name.Trim() == faction.Name.Trim()) && tempFactions.Count <= factionsToGet)
                         tempFactions.Add(faction);
 
                 //Jump to last faction
-                factionName = factions[factions.Count - 1].Name;
+                //Jump to last faction
+                try
+                {
+                    factionName = factions[factions.Count - 1].Name;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("wtf");
+                }
             }
 
             return tempFactions;
@@ -322,16 +330,23 @@ namespace Dx2_DiscordBot
 
             while (tempFactions.Count < factionsToGet)
             {
-                var factions = GetFactions(true, "", "Total");
+                var factions = GetFactions(true, factionName, "Total");
                 if (factions == null)
                     break;
 
                 foreach (var faction in factions)
-                    if (!tempFactions.Contains(faction) && tempFactions.Count <= factionsToGet)
+                    if (!tempFactions.Any(f => f.Name.Trim() == faction.Name.Trim()) && tempFactions.Count <= factionsToGet)
                         tempFactions.Add(faction);
 
                 //Jump to last faction
-                factionName = factions[factions.Count - 1].Name;
+                try
+                {
+                    factionName = factions[factions.Count - 1].Name;
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine("wtf");
+                }
             }
 
             return tempFactions;
@@ -347,16 +362,22 @@ namespace Dx2_DiscordBot
 
             while (tempFactions.Count < factionsToGet)
             {
-                var factions = GetFactions(true, "", "Phantom");
+                var factions = GetFactions(true, factionName, "Phantom");
                 if (factions == null)
                     break;
 
                 foreach (var faction in factions)
-                    if (!tempFactions.Contains(faction) && tempFactions.Count <= factionsToGet)
+                    if (!tempFactions.Any(f => f.Name.Trim() == faction.Name.Trim()) && tempFactions.Count <= factionsToGet)
                         tempFactions.Add(faction);
-
                 //Jump to last faction
-                factionName = factions[factions.Count - 1].Name;
+                try
+                {
+                    factionName = factions[factions.Count - 1].Name;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("wtf");
+                }
             }
 
             return tempFactions;
@@ -372,16 +393,22 @@ namespace Dx2_DiscordBot
 
             while (tempFactions.Count < factionsToGet)
             {
-                var factions = GetFactions(true, "", "Shadow");
+                var factions = GetFactions(true, factionName, "Shadow");
                 if (factions == null)
                     break;
 
                 foreach (var faction in factions)
-                    if (!tempFactions.Contains(faction) && tempFactions.Count <= factionsToGet)
+                    if (!tempFactions.Any(f => f.Name.Trim() == faction.Name.Trim()) && tempFactions.Count <= factionsToGet)
                         tempFactions.Add(faction);
-
                 //Jump to last faction
-                factionName = factions[factions.Count - 1].Name;
+                try
+                {
+                    factionName = factions[factions.Count - 1].Name;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("wtf");
+                }
             }
 
             return tempFactions;
@@ -398,7 +425,8 @@ namespace Dx2_DiscordBot
             {
                 foreach (var f in factions)
                 {
-                    if (f.Name != factionName) continue;
+                    if (f.Name.Trim() != factionName)
+                        continue;
                     //message += f.Rank + " | " + f.Name + " | " + f.Damage + "\n";
                     message += "Total: " + f.rank_total + " (Killed: " + f.Damage + ") | Phantoms: " + f.rank_phantoms + " | Shadows: " + f.rank_shadows + " | Mou-Ryo: " + f.rank_mr + "\n";
                     break;
@@ -444,13 +472,16 @@ namespace Dx2_DiscordBot
             var htmlDoc = web.Load("https://d2r-sim.mobile.sega.jp/socialsv/webview/GuildDevilDefeatEventRankingView.do" + CleanFactionName(factionName));
             if (getTop)
             {
-                return ReadTopRankings(htmlDoc, ranking);
+                if(factionName.Equals(""))
+                    return ReadTopRankings(htmlDoc, ranking,false);
+                else
+                    return ReadTopRankings(htmlDoc, ranking,true);
             }
             else
                 return ReadRankings(htmlDoc);
         }
 
-        private List<GhostFaction> ReadTopRankings(HtmlDocument htmlDoc, string ranking)
+        private List<GhostFaction> ReadTopRankings(HtmlDocument htmlDoc, string ranking, bool isContinuing)
         {
             List<GhostFaction> factions = new List<GhostFaction>();
 
@@ -488,7 +519,18 @@ namespace Dx2_DiscordBot
 
                     //Dmg
                     var allElementsWithClass = layer0.SelectNodes("//*[contains(@class,'dmgStr')]");
-                    dmg = allElementsWithClass[factions.Count + 10 * id_factor].InnerHtml;
+                    try
+                    {
+                        if(isContinuing)
+                            dmg = allElementsWithClass[factions.Count + 5 * id_factor].InnerHtml;
+                        else
+                            dmg = allElementsWithClass[factions.Count + 10 * id_factor].InnerHtml;
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine("fuck");
+                    }
+
 
                     factions.Add(
                                new GhostFaction()
@@ -529,11 +571,25 @@ namespace Dx2_DiscordBot
             //Fix any faction names passed that have spaces at beginnning or end of their names
             fixedFactionName = fixedFactionName.Trim();
 
+            //Fix Jap. Characters
+            fixedFactionName = fixedFactionName.Replace("！", "!");
+            fixedFactionName = fixedFactionName.Replace("？", "?");
+            fixedFactionName = fixedFactionName.Replace("０", "0");
+            fixedFactionName = fixedFactionName.Replace("１", "1");
+            fixedFactionName = fixedFactionName.Replace("２", "2");
+            fixedFactionName = fixedFactionName.Replace("３", "3");
+            fixedFactionName = fixedFactionName.Replace("４", "4");
+            fixedFactionName = fixedFactionName.Replace("５", "5");
+            fixedFactionName = fixedFactionName.Replace("６", "6");
+            fixedFactionName = fixedFactionName.Replace("７", "7");
+            fixedFactionName = fixedFactionName.Replace("８", "8");
+            fixedFactionName = fixedFactionName.Replace("９", "9");
+
             //Fix for factions with & symbol in there name to make them url safe
             fixedFactionName = HttpUtility.UrlEncode(fixedFactionName);
 
             //Completes the URL
-            fixedFactionName = "?guild_name=" + fixedFactionName.Replace(" ", "+") + "&x=59&y=28&search_flg=1&lang=1&search_count=2";
+            fixedFactionName = "?guild_name=" + fixedFactionName.Replace(" ", "+") + "&x=59&y=28&search_flg=1&lang=1&search_count=3";
 
             return fixedFactionName;
         }
