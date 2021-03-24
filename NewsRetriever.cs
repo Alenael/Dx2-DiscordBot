@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Dx2_DiscordBot
@@ -36,7 +37,33 @@ namespace Dx2_DiscordBot
         //Initialization
         public async override Task ReadyAsync()
         {
-            NewsItems = await GetNewsItems();
+            NewsItems = LoadNewsFromFile();
+            
+            var newNewsItems = await GetNewsItems();
+
+            var count = 0;
+
+            if (NewsItems.Count() != 0)
+            {
+                foreach (var ni in newNewsItems)
+                {
+                    if (!NewsItems.Any(i => i.Url == ni.Url) && !ni.Sent)
+                    {
+                        _ = Logger.LogAsync($"New News Posted! {ni.Title}");
+                        _ = SendNews(ni, count);
+                        NewsItems.Add(ni);
+                        count = count+1;
+
+                        await Task.Delay(15000);
+                    }
+                }
+            }
+            else
+            {
+                NewsItems = newNewsItems;
+            }
+
+            SaveNewsToFile();
             ResetTimer();
         }
 
@@ -86,19 +113,27 @@ namespace Dx2_DiscordBot
 
             var count = 0;
 
-            foreach (var ni in newNewsItems)
+            if (NewsItems.Count() != 0)
             {
-                if (!NewsItems.Any(i => i.Url == ni.Url))
+                foreach (var ni in newNewsItems)
                 {
-                    _ = Logger.LogAsync($"New News Posted! {ni.Title}");
-                    _ = SendNews(ni, count);
-                    NewsItems.Add(ni);
-                    count = count++;
+                    if (!NewsItems.Any(i => i.Url == ni.Url) && !ni.Sent)
+                    {
+                        _ = Logger.LogAsync($"New News Posted! {ni.Title}");
+                        _ = SendNews(ni, count);
+                        NewsItems.Add(ni);
+                        count = count + 1;
 
-                    await Task.Delay(15000);
+                        await Task.Delay(15000);
+                    }
                 }
             }
+            else
+            {
+                NewsItems = newNewsItems;
+            }
 
+            SaveNewsToFile();
             ResetTimer();
         }
 
@@ -111,7 +146,7 @@ namespace Dx2_DiscordBot
 
             using (System.Net.WebClient client = new System.Net.WebClient())
             {
-                if (ni.Image != null)
+                if (!String.IsNullOrEmpty(ni.Image))
                     client.DownloadFileTaskAsync(new Uri(ni.Image), fileName).Wait();
 
                 foreach (var g in _client.Guilds)
@@ -162,7 +197,7 @@ namespace Dx2_DiscordBot
                     {
                         try
                         {
-                            if (ni.Image != null && File.Exists(fileName))
+                            if (!String.IsNullOrEmpty(ni.Image) && File.Exists(fileName))
                                 await chnl.SendFileAsync(fileName, $"**{ni.Title}**\n{ni.Url}");
                             else
                                 await chnl.SendMessageAsync($"**{ni.Title}**\n{ni.Url}");
@@ -179,8 +214,35 @@ namespace Dx2_DiscordBot
                 }
             }
 
-            if (ni.Image != null)
+            if (!String.IsNullOrEmpty(ni.Image))
                 File.Delete(fileName);
+
+            ni.Sent = true;
+            SaveNewsToFile();
+        }
+
+        private const string newsItemsFileName = "newsItems.json";
+
+        public void SaveNewsToFile()
+        {
+            var settings = new JsonSerializerOptions()
+            {
+                WriteIndented = true
+            };
+
+            var jsonString = JsonSerializer.Serialize(NewsItems, settings);
+            File.WriteAllTextAsync(newsItemsFileName, jsonString);
+        }
+
+        public List<News> LoadNewsFromFile()
+        {
+            if (File.Exists(newsItemsFileName))
+            {
+                var jsonString = File.ReadAllText(newsItemsFileName);
+                return JsonSerializer.Deserialize<List<News>>(jsonString);
+            }
+            else
+                return new List<News>();
         }
 
         public async Task<List<News>> GetNewsItems()
@@ -197,9 +259,9 @@ namespace Dx2_DiscordBot
                 var link = urls[i].GetAttributeValue("href", "");
 
                 var newsItem = new News();
-                newsItem.Title = urls[i].SelectSingleNode("h3").InnerText.Replace("\"", "\"\"");
-                newsItem.Url = baseUrl + link;
-                newsItem.Image = urls[i].SelectSingleNode("div/img")?.GetAttributeValue("src", "");
+                newsItem.Title = urls[i].SelectSingleNode("h3").InnerText.Replace("\"", "\"\"") ?? "";
+                newsItem.Url = baseUrl + link ?? "";
+                newsItem.Image = urls[i].SelectSingleNode("div/img")?.GetAttributeValue("src", "") ?? "";
                 newsItems.Add(newsItem);
             }
 
@@ -220,10 +282,12 @@ namespace Dx2_DiscordBot
         #endregion
     }
 
+    [Serializable]
     public class News
     {
-        public string Title;
-        public string Url;
-        public string Image;
+        public string Title { get; set; }
+        public string Url { get; set; }
+        public string Image { get; set; }
+        public bool Sent { get; set; }
     }
 }
