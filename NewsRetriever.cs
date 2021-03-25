@@ -38,33 +38,8 @@ namespace Dx2_DiscordBot
         public async override Task ReadyAsync()
         {
             NewsItems = LoadNewsFromFile();
-            
-            var newNewsItems = await GetNewsItems();
-
-            var count = 0;
-
-            if (NewsItems.Count() != 0)
-            {
-                foreach (var ni in newNewsItems)
-                {
-                    if (!NewsItems.Any(i => i.Url == ni.Url) && !ni.Sent)
-                    {
-                        _ = Logger.LogAsync($"New News Posted! {ni.Title}");
-                        _ = SendNews(ni, count);
-                        NewsItems.Add(ni);
-                        count = count+1;
-
-                        await Task.Delay(15000);
-                    }
-                }
-            }
-            else
-            {
-                NewsItems = newNewsItems;
-            }
-
-            SaveNewsToFile();
             ResetTimer();
+            await PrepareToSendNews();
         }
 
         //Recieve Messages here
@@ -81,7 +56,19 @@ namespace Dx2_DiscordBot
                 {
                     if (_client.GetChannel(channelId) is IMessageChannel chnl)
                     {
-                        _ = SendNews(new News() { Title = "Kishin/Snake Fusion 30% OFF Event Coming Soon! (This is a manual test of the system. Thanks for the understanding.)", Url = "https://d2-megaten-l.sega.com/en/news/detail/079492.html", Image = "https://d2-megaten-l.sega.com/webview/en/upload_images/848669ee2d7bc251692a9f264817eb62cc7ee313.png" }, 0, true);
+                        _ = SendNews(new News() { Title = "Kishin/Snake Fusion 30% OFF Event Coming Soon! (This is a manual test of the system. Thanks for the understanding.)", Url = "https://d2-megaten-l.sega.com/en/news/detail/079492.html", Image = "https://d2-megaten-l.sega.com/webview/en/upload_images/848669ee2d7bc251692a9f264817eb62cc7ee313.png" }, true);
+                    }
+                }
+                else if (items[1].Trim().StartsWith("send it"))
+                {
+                    if (_client.GetChannel(channelId) is IMessageChannel chnl)
+                    {
+                        foreach (var news in NewsItems)
+                            if (news.Sent == false)
+                            {
+                                _ = Logger.LogAsync($"New News Posted! {news.Title}");
+                                _ = SendNews(news);
+                            }
                     }
                 }
             }
@@ -106,12 +93,13 @@ namespace Dx2_DiscordBot
 
         private async void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            timer.Enabled = false;
-            timer = null;
+            ResetTimer();
+            await PrepareToSendNews();
+        }
 
+        public async Task PrepareToSendNews()
+        {
             var newNewsItems = await GetNewsItems();
-
-            var count = 0;
 
             if (NewsItems.Count() != 0)
             {
@@ -120,9 +108,8 @@ namespace Dx2_DiscordBot
                     if (!NewsItems.Any(i => i.Url == ni.Url) && !ni.Sent)
                     {
                         _ = Logger.LogAsync($"New News Posted! {ni.Title}");
-                        _ = SendNews(ni, count);
+                        _ = SendNews(ni);
                         NewsItems.Add(ni);
-                        count = count + 1;
 
                         await Task.Delay(15000);
                     }
@@ -131,18 +118,20 @@ namespace Dx2_DiscordBot
             else
             {
                 NewsItems = newNewsItems;
+
+                foreach (var item in newNewsItems)
+                    item.Sent = true;
             }
 
             SaveNewsToFile();
-            ResetTimer();
         }
 
         private List<string> botSpamChannelNames = new List<string>() { "bot-spam", "spam-bot" };
         private List<string> newsChannelNames = new List<string>() { "news", "announcements" };
 
-        public async Task SendNews(News ni, int count, bool testing = false)
+        public async Task SendNews(News ni, bool testing = false)
         {
-            var fileName = $"newsbanner_{count}.png";
+            var fileName = $"{Guid.NewGuid()}.png";
 
             using (System.Net.WebClient client = new System.Net.WebClient())
             {
