@@ -37,7 +37,7 @@ namespace Dx2_DiscordBot
         //Initialization
         public async override Task ReadyAsync()
         {
-            NewsItems = LoadNewsFromFile();
+            NewsItems = await LoadNewsFromFile();
             ResetTimer();
             await PrepareToSendNews();
         }
@@ -67,7 +67,7 @@ namespace Dx2_DiscordBot
                             if (news.Sent == false)
                             {
                                 _ = Logger.LogAsync($"New News Posted! {news.Title}");
-                                _ = SendNews(news);
+                                var t = Task.Run(() => SendNews(news));
                             }
                     }
                 }
@@ -108,10 +108,8 @@ namespace Dx2_DiscordBot
                     if (!NewsItems.Any(i => i.Url == ni.Url) && !ni.Sent)
                     {
                         _ = Logger.LogAsync($"New News Posted! {ni.Title}");
-                        _ = SendNews(ni);
+                        var t = Task.Run(() => SendNews(ni));
                         NewsItems.Add(ni);
-
-                        await Task.Delay(15000);
                     }
                 }
             }
@@ -123,7 +121,7 @@ namespace Dx2_DiscordBot
                     item.Sent = true;
             }
 
-            SaveNewsToFile();
+            await SaveNewsToFile();
         }
 
         private List<string> botSpamChannelNames = new List<string>() { "bot-spam", "spam-bot" };
@@ -198,8 +196,6 @@ namespace Dx2_DiscordBot
                             await Logger.LogAsync("Could not send to '" + g.Name + "' in channel '" + chnl.Name + "'. " + e.Message + " " + e.InnerException);
                         }
                     }
-
-                    await Task.Delay(5000);
                 }
             }
 
@@ -207,12 +203,12 @@ namespace Dx2_DiscordBot
                 File.Delete(fileName);
 
             ni.Sent = true;
-            SaveNewsToFile();
+            await SaveNewsToFile();
         }
 
         private const string newsItemsFileName = "newsItems.json";
 
-        public void SaveNewsToFile()
+        public async Task SaveNewsToFile()
         {
             var settings = new JsonSerializerOptions()
             {
@@ -220,14 +216,17 @@ namespace Dx2_DiscordBot
             };
 
             var jsonString = JsonSerializer.Serialize(NewsItems, settings);
-            File.WriteAllTextAsync(newsItemsFileName, jsonString);
+            var buffer = Encoding.UTF8.GetBytes(jsonString);
+
+            using var fs = new FileStream(newsItemsFileName, FileMode.Create, FileAccess.ReadWrite, FileShare.None, buffer.Length, true);
+            await fs.WriteAsync(buffer, 0, buffer.Length);
         }
 
-        public List<News> LoadNewsFromFile()
+        public async Task<List<News>> LoadNewsFromFile()
         {
             if (File.Exists(newsItemsFileName))
             {
-                var jsonString = File.ReadAllText(newsItemsFileName);
+                var jsonString = await File.ReadAllTextAsync(newsItemsFileName);
                 return JsonSerializer.Deserialize<List<News>>(jsonString);
             }
             else
@@ -253,6 +252,8 @@ namespace Dx2_DiscordBot
                 newsItem.Image = urls[i].SelectSingleNode("div/img")?.GetAttributeValue("src", "") ?? "";
                 newsItems.Add(newsItem);
             }
+
+            newsItems.Reverse();
 
             return newsItems;
         }
