@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -351,10 +350,12 @@ namespace Dx2_DiscordBot
             demon.Panel1 = row["Panel 1"] is DBNull ? "" : (string)row["Panel 1"];
             demon.Panel2 = row["Panel 2"] is DBNull ? "" : (string)row["Panel 2"];
             demon.Panel3 = row["Panel 3"] is DBNull ? "" : (string)row["Panel 3"];
+            demon.Panel4 = row["Panel 4"] is DBNull ? "" : (string)row["Panel 4"];
 
             demon.Panel1Stats = row["Panel 1 Stats"] is DBNull ? "" : (string)row["Panel 1 Stats"];
             demon.Panel2Stats = row["Panel 2 Stats"] is DBNull ? "" : (string)row["Panel 2 Stats"];
             demon.Panel3Stats = row["Panel 3 Stats"] is DBNull ? "" : (string)row["Panel 3 Stats"];
+            demon.Panel4Stats = row["Panel 4 Stats"] is DBNull ? "" : (string)row["Panel 4 Stats"];
 
             demon.Gacha = row["Gacha"] is DBNull ? false : (string)row["Gacha"] == "1";
             demon.Event = row["Event"] is DBNull ? false : (string)row["Event"] == "1";
@@ -446,10 +447,12 @@ namespace Dx2_DiscordBot
         public string Panel1;
         public string Panel2;
         public string Panel3;
+        public string Panel4;
 
         public string Panel1Stats;
         public string Panel2Stats;
         public string Panel3Stats;
+        public string Panel4Stats;
 
         public bool Gacha;
         public bool Event;
@@ -496,6 +499,7 @@ namespace Dx2_DiscordBot
             var panelInfo1 = "";
             var panelInfo2 = "";
             var panelInfo3 = "";
+            var panelInfo4 = "";
 
             if (Panel1 != "")
                 panelInfo1 = "1: " + Panel1 + " " + Panel1Stats + "\n";
@@ -504,7 +508,10 @@ namespace Dx2_DiscordBot
                 panelInfo2 = "2: " + Panel2 + " " + Panel2Stats + "\n";
 
             if (Panel3 != "")
-                panelInfo3 = "3: " + Panel3 + " " + Panel3Stats + "\n\n";
+                panelInfo3 = "3: " + Panel3 + " " + Panel3Stats + "\n";
+
+            if (Panel4 != "")
+                panelInfo4 = "4: " + Panel4 + " " + Panel4Stats + "\n\n";
 
             var clear = "C: " + GenerateSkillWikiLink(AwakenC) + "\n";
             var red = "R: " + GenerateSkillWikiLink(AwakenR) + " | " + GenerateSkillWikiLink(GachaR) + "\n";
@@ -559,7 +566,7 @@ namespace Dx2_DiscordBot
             eb.AddField("Resists", resist, false);
 
             if (panelInfo1 != "")
-                eb.AddField("Panels", panelInfo1 + panelInfo2 + panelInfo3, true);
+                eb.AddField("Panels", panelInfo1 + panelInfo2 + panelInfo3 + panelInfo4, true);
 
             var demonCount = DemonRetriever.Demons.Count();
 
@@ -638,4 +645,3 @@ namespace Dx2_DiscordBot
 
     #endregion
 }
-
