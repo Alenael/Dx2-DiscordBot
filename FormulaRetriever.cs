@@ -53,6 +53,25 @@ namespace Dx2_DiscordBot
                 "FINAL ACCURACY = TEMP ACCURACY + ACC BRANDS + ACC SKILLS - EVASION BRANDS - EVASION SKILLS\n" +
                 "MINIMUM ACCURACY = 100 * BASE SKILL ACCURACY * 0.2\n" +
                 "There is a minimum hit chance, and it will take either MINIMUM ACCURACY or FINAL ACCURACY depending on what's higher.\n" +
+                "FUNCTION1(DIFF_AGI) is:\n" +
+                "102 if DIFF_AGI >= 256\n" +
+                "100 if DIFF_AGI >= 40\n" +
+                "98 if DIFF_AGI >= 30\n" +
+                "96 if DIFF_AGI >= 20\n" +
+                "94 if DIFF_AGI >= 10\n" +
+                "92 if DIFF_AGI >= 0\n" +
+                "88 if DIFF_AGI >= -20\n" +
+                "84 if DIFF_AGI >= -40\n" +
+                "80 if DIFF_AGI >= -60\n" +
+                "76 if DIFF_AGI < -60\n" +
+                "FUNCTION2(DIFF_LUK) is:\n" +
+                "13 if DIFF_LUK >= 256\n" +
+                "11 if DIFF_LUK >= 30\n" +
+                "9 if DIFF_LUK >= 20\n" +
+                "7 if DIFF_LUK >= 10\n" +
+                "5 if DIFF_LUK >= 0\n" +
+                "0 if DIFF_LUK >= -30\n" +
+                "-5 if DIFF_LUK < -30\n" +
                 "```";
 
             CounterFormula = "```" +
