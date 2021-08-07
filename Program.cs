@@ -57,6 +57,7 @@ namespace Dx2_DiscordBot
                 Retrievers.Add(new FormulaRetriever(_client));
                 Retrievers.Add(new MessageSender(_client));
                 Retrievers.Add(new SwordRetriever(_client));
+                Retrievers.Add(new ShieldRetriever(_client));
 
                 //Environment.SetEnvironmentVariable("token", "EnterYourTokenHereAndThenUncommentAndRunTHENREMOVE", EnvironmentVariableTarget.User); 
 
