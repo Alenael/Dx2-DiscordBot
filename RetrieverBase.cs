@@ -79,9 +79,21 @@ namespace Dx2_DiscordBot
                 WebClient webClient = new WebClient();
                 var results = webClient.DownloadString(url);
 
-                using (var csv = new CsvReader(new StringReader(results)))                
-                    using (var dr = new CsvDataReader(csv))                                            
+                using (var csv = new CsvReader(new StringReader(results)))
+                {
+                    using (var dr = new CsvDataReader(csv))
+                    {
+                        var bad = new List<string>();
+                        csv.Configuration.BadDataFound = context =>
+                        {
+                            bad.Add(context.RawRecord);
+                        };
+                        //while (dr.Read())
+                        //{
+                        //}
                         dt.Load(dr);
+                    }
+                }                        
             }
             catch(Exception e)
             {

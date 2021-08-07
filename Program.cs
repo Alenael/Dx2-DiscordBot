@@ -50,14 +50,13 @@ namespace Dx2_DiscordBot
                 //Add all our Retrievers to our list
                 Retrievers.Add(new DemonRetriever(_client));
                 Retrievers.Add(new SkillRetriever(_client));
-                //Retrievers.Add(new GKRetriever(_client));
-                //Retrievers.Add(new GhostRetriever(_client));
                 Retrievers.Add(new AG2Retriever(_client));
                 Retrievers.Add(new ResistsRetriever(_client));
                 Retrievers.Add(new MoonRetriever(_client));
                 Retrievers.Add(new TierDataRetriever(_client));
                 Retrievers.Add(new FormulaRetriever(_client));
                 Retrievers.Add(new MessageSender(_client));
+                Retrievers.Add(new SwordRetriever(_client));
 
                 //Environment.SetEnvironmentVariable("token", "EnterYourTokenHereAndThenUncommentAndRunTHENREMOVE", EnvironmentVariableTarget.User); 
 
