@@ -199,7 +199,8 @@ namespace Dx2_DiscordBot
 
             sword.DemonName = row["demon name"] is DBNull ? "" : (string)row["demon name"];
             sword.SwordName = row["sword Name"] is DBNull ? "" : (string)row["sword Name"];
-            sword.Talent = row["Talent name and effect"] is DBNull ? "" : (string)row["Talent name and effect"];
+            sword.Talent = row["Talent name"] is DBNull ? "" : (string)row["Talent name"];
+            sword.Effect = row["Talent effect"] is DBNull ? "" : (string)row["Talent effect"];
 
             sword.Skill1 = row["skill 1"] is DBNull ? "" : (string)row["skill 1"];
             sword.Skill2 = row["skill 2"] is DBNull ? "" : (string)row["skill 2"];
@@ -245,6 +246,7 @@ namespace Dx2_DiscordBot
         public string DemonName;
         public string SwordName;
         public string Talent;
+        public string Effect;
         public string Skill1;
         public string Skill2;
         public string AwakenSkill;
@@ -278,7 +280,7 @@ namespace Dx2_DiscordBot
             Skill2 + "\n" +
             AwakenSkill, true);
 
-            eb.AddField("Talent:", Talent, false);
+            eb.AddField("Talent:", Talent + Effect, false);
             
             var panelInfo1 = "";
             var panelInfo2 = "";

@@ -13,7 +13,7 @@ namespace Dx2_DiscordBot
     {
         #region Properties
 
-        private static List<Skill> Skills;
+        private static List<SkillBase> Skills;
 
         private const int LEV_DISTANCE = 1;
 
@@ -36,11 +36,14 @@ namespace Dx2_DiscordBot
         //Initialization
         public async override Task ReadyAsync()
         {
-            var skillDt = await GetCSV("https://raw.githubusercontent.com/Alenael/Dx2DB/master/csv/SMT Dx2 Database - Skills.csv");            
+            var skillDt = await GetCSV("https://raw.githubusercontent.com/Alenael/Dx2DB/master/csv/SMT Dx2 Database - Skills.csv");
+            var aSkillDt = await GetCSV("https://raw.githubusercontent.com/Alenael/Dx2DB/master/csv/SMT Dx2 Database - Armaments Skills.csv");
 
-            var tempSkills = new List<Skill>();
+            var tempSkills = new List<SkillBase>();
             foreach (DataRow row in skillDt.Rows)
                 tempSkills.Add(LoadSkill(row));
+            foreach (DataRow row in aSkillDt.Rows)
+                tempSkills.Add(LoadASkill(row));
             Skills = tempSkills;
         }
 
@@ -61,13 +64,13 @@ namespace Dx2_DiscordBot
                 if (_client.GetChannel(channelId) is IMessageChannel chnl)
                 {
                     //If exact demon not found
-                    if (skill.Name == null)
+                    if (skill == null || skill.Name == null)
                     {
                         //Find anyone matching the nickname of a demon
                         skill = Skills.Find(s => s.Nicknames != "" && s.NicknamesList.Any(n => n == searchedSkill));
 
                         //If exact demon not found
-                        if (skill.Name == null)
+                        if (skill == null || skill.Name == null)
                         {
                             //Find all similar demons
                             List<String> similarDemons = getSimilarSkills(searchedSkill, LEV_DISTANCE);
@@ -82,7 +85,7 @@ namespace Dx2_DiscordBot
                                 if (skillsStartingWith.Count == 1)
                                 {
                                     skill = Skills.Find(x => x.Name.ToLower() == skillsStartingWith[0].ToLower());
-                                    if (skill.Name != null)
+                                    if (skill != null && skill.Name != null)
                                         await chnl.SendMessageAsync("", false, skill.WriteToDiscord());
                                 }
                                 else if (skillsStartingWith.Count > MAX_SIMILAR_SKILLS)
@@ -150,7 +153,7 @@ namespace Dx2_DiscordBot
         {
             List<string> skillSW = new List<string>();
 
-            foreach (Skill skill in Skills)
+            foreach (SkillBase skill in Skills)
             {
                 if (skill.Name.ToLower().StartsWith(searchedSkill.ToLower()))
                     skillSW.Add(skill.Name);
@@ -168,7 +171,7 @@ namespace Dx2_DiscordBot
         {
             List<string> simSkills = new List<string>();
 
-            foreach (Skill skill in Skills)
+            foreach (SkillBase skill in Skills)
             {
                 int levDistance = 999;
 
@@ -181,7 +184,6 @@ namespace Dx2_DiscordBot
                     Logger.LogAsync("ArgumentNullException in getSimilarDemons: " + e.Message);
 
                 }
-                //Console.WriteLine("LevDistance between : " + demon.Name + " and " + searchedDemon + levDistance);
 
                 //If only off by levDist characters, add to List
                 if (levDistance <= levDist)
@@ -238,20 +240,88 @@ namespace Dx2_DiscordBot
                 NicknamesList = nicknamesList
             };
             
-            skill.BuildSKill(DemonRetriever.GetDemonsWithSkill(name));
+            skill.BuildSkill(DemonRetriever.GetDemonsWithSkill(name));
             skill.BuildInnateSKill(DemonRetriever.GetDemonsWithInnateSkill(name));
 
             return skill;
+        }
+
+        private static ASkill LoadASkill(DataRow row)
+        {
+            var name = row["Skill name"] is DBNull ? "" : (string)row["Skill name"];
+
+            var nicknames = row["Nickname"] is DBNull ? "" : (string)row["Nickname"];
+            var nicknamesList = new List<string>();
+
+            if (nicknames.Contains(","))
+            {
+                var nicknameList = nicknames.Split(",");
+                foreach (var nickname in nicknameList)
+                    nicknamesList.Add(nickname.Trim());
+            }
+            else
+            {
+                nicknamesList.Add(nicknames.Trim());
+            }
+
+            var askill = new ASkill()
+            {
+                Name = name,
+                Affinity = row["Affinity"] is DBNull ? "" : (string)row["Affinity"],
+                MP = row["mp/passive"] is DBNull ? "" : (string)row["mp/passive"],
+                Effect = row["effect"] is DBNull ? "" : (string)row["effect"],
+                Target = row["target"] is DBNull ? "" : (string)row["target"],
+                Nicknames = nicknames,
+                NicknamesList = nicknamesList
+            };
+
+            return askill;
         }
 
         #endregion
     }
     #region Structs
 
-    //Struct to hold our Skill Data
-    public struct Skill
+    public abstract class SkillBase
     {
         public string Name;
+        public string Nicknames;
+        public List<string> NicknamesList;
+
+        public abstract Embed WriteToDiscord();
+    }
+
+    public class ASkill : SkillBase
+    {
+        public string Affinity;
+        public string MP;
+        public string Effect;
+        public string Target;
+
+        public override Embed WriteToDiscord()
+        {
+            Affinity = char.ToUpper(Affinity[0]) + Affinity.Substring(1);
+
+            var url = "https://dx2wiki.com/index.php/" + Uri.EscapeDataString(Name.Replace("[", "(").Replace("]", ")")).Replace("(", "%28").Replace(")", "%29");
+            var thumbnail = "https://teambuilder.dx2wiki.com/Images/Spells/" + Uri.EscapeDataString(Affinity) + ".png";
+
+            var eb = new EmbedBuilder();
+            eb.WithTitle(Name);
+            eb.AddField("Element: ", Affinity, true);
+            eb.AddField("Cost: ", MP, true);
+            eb.AddField("Target: ", Target, true);
+            eb.WithDescription(Effect);
+            if (!string.IsNullOrEmpty(Nicknames))
+                eb.WithFooter("Nicknames: " + Nicknames.Replace(",", ", "));
+            eb.WithUrl(url);
+            eb.WithThumbnailUrl(thumbnail);
+            return eb.Build();
+        }
+    }
+
+    //Struct to hold our Skill Data
+    public class Skill : SkillBase
+    {
         public string Element;
         public string Cost;
         public string Description;
@@ -265,10 +335,7 @@ namespace Dx2_DiscordBot
         public bool ExtractTransfer;
         public string TransferrableFrom;
 
-        public string Nicknames;
-        public List<string> NicknamesList;
-
-        public Embed WriteToDiscord()
+        public override Embed WriteToDiscord()
         {
             //Perform some fixes on values before exporting
 
@@ -278,7 +345,7 @@ namespace Dx2_DiscordBot
             if (Sp == "")
                 Sp = "-";
 
-            Description = Description.Replace("\\n", "\n") + InnateFrom + TransferrableFrom;
+            var newDescription = Description.Replace("\\n", "\n") + InnateFrom + TransferrableFrom;
 
             var url = "https://dx2wiki.com/index.php/" + Uri.EscapeDataString(Name.Replace("[", "(").Replace("]", ")")).Replace("(", "%28").Replace(")", "%29");
             var thumbnail = "https://teambuilder.dx2wiki.com/Images/Spells/" + Uri.EscapeDataString(Element) + ".png";
@@ -292,7 +359,7 @@ namespace Dx2_DiscordBot
             eb.AddField("Sp: ", Sp, true);
             if (!string.IsNullOrEmpty(Nicknames))
                 eb.WithFooter("Nicknames: " + Nicknames.Replace(",", ", "));
-            eb.WithDescription(Description);
+            eb.WithDescription(newDescription);
             eb.WithUrl(url);
             eb.WithThumbnailUrl(thumbnail);
             return eb.Build();
@@ -336,13 +403,13 @@ namespace Dx2_DiscordBot
         }
 
         //Builds out our skill with additional details that require some processing
-        public void BuildSKill(Dictionary<string, List<Demon>> skillInfos)
+        public void BuildSkill(Dictionary<string, List<Demon>> skillInfos)
         {
             var transferrableFrom = "";
 
             if (skillInfos["Transferrable"].Count > 0)
             {
-                transferrableFrom += "\n\n Transferrable From: ";
+                transferrableFrom += "\n Transferrable From: ";
 
                 foreach (var s in skillInfos["Transferrable"])
                 {
