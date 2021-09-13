@@ -361,6 +361,8 @@ namespace Dx2_DiscordBot
             demon.Event = row["Event"] is DBNull ? false : (string)row["Event"] == "1";
             demon.MultiFusion = row["Multi-Fusion"] is DBNull ? false : (string)row["Multi-Fusion"] == "1";
             demon.BannerRequired = row["Banner Required"] is DBNull ? false : (string)row["Banner Required"] == "1";
+            demon.Negotiation = row["Negotiation"] is DBNull ? false : (string)row["Negotiation"] == "1";
+            demon.Exchangeable = row["Exchangeable"] is DBNull ? false : (string)row["Exchangeable"] == "1";
 
             demon.Nicknames = row["Nickname"] is DBNull ? "" : (string)row["Nickname"];
             demon.NicknamesList = new List<string>();
@@ -458,6 +460,8 @@ namespace Dx2_DiscordBot
         public bool Event;
         public bool MultiFusion;
         public bool BannerRequired;
+        public bool Negotiation;
+        public bool Exchangeable; 
 
         public string Nicknames;
         public List<string> NicknamesList;
@@ -466,7 +470,7 @@ namespace Dx2_DiscordBot
         {
             var url = "https://dx2wiki.com/index.php/" + Uri.EscapeDataString(Name);
             var thumbnail = "https://raw.githubusercontent.com/Alenael/Dx2DB/master/Images/Demons/" + Uri.EscapeDataString(Name.Replace("☆", "")) + ".jpg";
-            
+
             var eb = new EmbedBuilder();
             eb.WithTitle(Name);
 
@@ -550,7 +554,7 @@ namespace Dx2_DiscordBot
 
             if (Skill3 != "")
                 skill3 = GenerateSkillWikiLink(Skill3) + "\n";
-            
+
             eb.AddField("Skills:",
                  GenerateSkillWikiLink(Skill1) + "\n" +
                  GenerateSkillWikiLink(Skill2) + "\n" +
@@ -572,11 +576,18 @@ namespace Dx2_DiscordBot
 
             var fusionUrls = "";
 
-            fusionUrls += "[Used In Fusions](" + GetFusionUrl("fusion") + ")\n";
+            if (Negotiation)
+                fusionUrls += "Only available via Negotiation.";
+            else if (Exchangeable)
+                fusionUrls += "Only available via an Exchange.";
+            else
+            {
+                fusionUrls += "[Used In Fusions](" + GetFusionUrl("fusion") + ")\n";
 
-            if (MultiFusion || !Gacha)
-                fusionUrls += "[How To Fuse](" + GetFusionUrl("fission") + ")";
-
+                if (MultiFusion || !Gacha)
+                  fusionUrls += "[How To Fuse](" + GetFusionUrl("fission") + ")";
+            }
+            
             eb.AddField("Stats", "HP: " + HP + " | " +
                 "Vit: " + Vit + " (" + DemonRetriever.GetMyRank(Name).Vit + "/" + demonCount + ")\n" +
                 "Str: " + Str + " (" + DemonRetriever.GetMyRank(Name).Str + "/" + demonCount + ") | " +

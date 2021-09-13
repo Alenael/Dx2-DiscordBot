@@ -236,6 +236,7 @@ namespace Dx2_DiscordBot
                 ExtractExclusive = row["ExtractExclusive"] != null ? false : (bool)row["ExtractExclusive"],
                 DuelExclusive = row["DuelExclusive"] != null ? false : (bool)row["DuelExclusive"],
                 ExtractTransfer = row["ExtractTransfer"] != null ? false : (bool)row["ExtractTransfer"],
+                UseLimit = row["UseLimit"] is DBNull ? "" : (string)row["UseLimit"],
                 Nicknames = nicknames,
                 NicknamesList = nicknamesList
             };
@@ -271,6 +272,7 @@ namespace Dx2_DiscordBot
                 MP = row["mp/passive"] is DBNull ? "" : (string)row["mp/passive"],
                 Effect = row["effect"] is DBNull ? "" : (string)row["effect"],
                 Target = row["target"] is DBNull ? "" : (string)row["target"],
+                UseLimit = row["UseLimit"] is DBNull ? "" : (string)row["UseLimit"],
                 Nicknames = nicknames,
                 NicknamesList = nicknamesList
             };
@@ -297,6 +299,7 @@ namespace Dx2_DiscordBot
         public string MP;
         public string Effect;
         public string Target;
+        public string UseLimit;
 
         public override Embed WriteToDiscord()
         {
@@ -304,12 +307,15 @@ namespace Dx2_DiscordBot
 
             var url = "https://dx2wiki.com/index.php/" + Uri.EscapeDataString(Name.Replace("[", "(").Replace("]", ")")).Replace("(", "%28").Replace(")", "%29");
             var thumbnail = "https://teambuilder.dx2wiki.com/Images/Spells/" + Uri.EscapeDataString(Affinity) + ".png";
-
+            
             var eb = new EmbedBuilder();
             eb.WithTitle(Name);
             eb.AddField("Element: ", Affinity, true);
             eb.AddField("Cost: ", MP, true);
             eb.AddField("Target: ", Target, true);
+
+            if (UseLimit != "")
+                eb.AddField("Max Uses: ", UseLimit, true);
             eb.WithDescription(Effect);
             if (!string.IsNullOrEmpty(Nicknames))
                 eb.WithFooter("Nicknames: " + Nicknames.Replace(",", ", "));
@@ -334,6 +340,7 @@ namespace Dx2_DiscordBot
         public bool DuelExclusive;
         public bool ExtractTransfer;
         public string TransferrableFrom;
+        public string UseLimit;
 
         public override Embed WriteToDiscord()
         {
@@ -345,7 +352,7 @@ namespace Dx2_DiscordBot
             if (Sp == "")
                 Sp = "-";
 
-            var newDescription = Description.Replace("\\n", "\n") + InnateFrom + TransferrableFrom;
+            var newDescription = Description.Replace("\\n", "\n") + "\n" + InnateFrom + TransferrableFrom;
 
             var url = "https://dx2wiki.com/index.php/" + Uri.EscapeDataString(Name.Replace("[", "(").Replace("]", ")")).Replace("(", "%28").Replace(")", "%29");
             var thumbnail = "https://teambuilder.dx2wiki.com/Images/Spells/" + Uri.EscapeDataString(Element) + ".png";
@@ -357,6 +364,8 @@ namespace Dx2_DiscordBot
             eb.AddField("Cost: ", Cost, true);
             eb.AddField("Target: ", Target, true);
             eb.AddField("Sp: ", Sp, true);
+            if (UseLimit != "")
+                eb.AddField("Max Uses: ", UseLimit, true);
             if (!string.IsNullOrEmpty(Nicknames))
                 eb.WithFooter("Nicknames: " + Nicknames.Replace(",", ", "));
             eb.WithDescription(newDescription);
@@ -372,7 +381,7 @@ namespace Dx2_DiscordBot
 
             if (skillInfos["Innate"].Count > 0)
             {
-                innateFrom += "\n\n Innate From: ";
+                innateFrom += "\n Innate From: ";
 
                 foreach (var s in skillInfos["Innate"])
                 {
