@@ -88,9 +88,6 @@ namespace Dx2_DiscordBot
                         {
                             bad.Add(context.RawRecord);
                         };
-                        //while (dr.Read())
-                        //{
-                        //}
                         dt.Load(dr);
                     }
                 }                        

@@ -91,6 +91,8 @@ namespace Dx2_DiscordBot
             }
         }
 
+        private List<ulong> BannedUsers = new List<ulong>() { 241520603977351168 };
+
         // This is not the recommended way to write a bot - consider
         // reading over the Commands Framework sample.
         private async Task MessageReceivedAsync(SocketMessage message)
@@ -98,6 +100,14 @@ namespace Dx2_DiscordBot
             // The bot should never respond to itself.
             if (message.Author.Id == _client.CurrentUser.Id)
                 return;
+
+            if (BannedUsers.Contains(message.Author.Id))
+            {
+                //if (_client.GetChannel(message.Channel.Id) is IMessageChannel chnl)                
+                //    await chnl.SendMessageAsync("Nah!");              
+                await Logger.LogAsync(message.Author.Username + " tried to use a command but was denied.");
+                return;
+            }
 
             if (message.Channel is IPrivateChannel)
             {

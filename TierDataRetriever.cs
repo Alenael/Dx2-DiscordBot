@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -62,7 +63,8 @@ namespace Dx2_DiscordBot
 
         public async Task LoadData()
         {
-            var demonsDt = await GetCSV("https://raw.githubusercontent.com/Alenael/Dx2DB/master/csv/TierData.csv");
+            var demonsDt = await GetCSV(ConfigurationManager.AppSettings["tierDataPath"]);
+            //var demonsDt = await GetCSV("https://raw.githubusercontent.com/Alenael/Dx2DB/master/csv/TierData.csv");
 
             var tempDemons = new List<DemonInfo>();
             foreach (DataRow row in demonsDt.Rows)
