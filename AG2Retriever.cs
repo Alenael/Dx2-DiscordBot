@@ -54,10 +54,10 @@ namespace Dx2_DiscordBot
                             var items = message.Content.Split(MainCommand + "bossupload");
 
                             var dir = AppDomain.CurrentDomain.BaseDirectory + "boss\\";
-                            var fileName = dir + items[1].Trim() + Path.GetExtension(attachment.Filename);
+                            var fileName = dir + "SPOILER_" + items[1].Trim() + Path.GetExtension(attachment.Filename);
 
-                            File.Delete(dir + items[1].Trim() + ".png");
-                            File.Delete(dir + items[1].Trim() + ".jpg");
+                            File.Delete(dir + "SPOILER_" + items[1].Trim() + ".png");
+                            File.Delete(dir + "SPOILER_" + items[1].Trim() + ".jpg");
 
                             await DownloadFile(new Uri(attachment.Url), fileName);
                             await chnl.SendMessageAsync("Saved - " + attachment.Filename + " as " + Path.GetFileName(fileName) + " for floor " + items[1].Trim() + ".");
@@ -87,7 +87,7 @@ namespace Dx2_DiscordBot
 
                     files.Append("```md\n");
                     foreach (var file in dirFiles)
-                        files.Append(file.Name + "\n");
+                        files.Append(file.Name.Replace("SPOILER_", "") + "\n");
                     files.Append("```");
 
                     await chnl.SendMessageAsync(files.ToString() );
@@ -120,7 +120,7 @@ namespace Dx2_DiscordBot
                 else if (message.Content.StartsWith(MainCommand + "boss"))
                 {
                     var items = message.Content.Split(MainCommand + "boss");
-                    var file = GetFile("boss\\", items[1].Trim());
+                    var file = GetFile("boss\\", "SPOILER_" + items[1].Trim());
 
                     if (file != "" && File.Exists(file))
                         await chnl.SendFileAsync(file, "AG2 Boss - " + items[1].Trim());

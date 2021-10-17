@@ -525,6 +525,10 @@ namespace Dx2_DiscordBot
                 eb.AddField("Demo Prelim Rating", DemoPrelimScore, true);
             if (!string.IsNullOrEmpty(DemoBossScore))
                 eb.AddField("Demo Boss Rating", DemoBossScore, true);
+
+            if (description.Length >= 2000)
+                description = description.Substring(0, 2000) + "\nDescription to long.. Continue Reading On Wiki";
+
             eb.WithDescription(description);
             eb.WithFooter("If you disagree with this discuss in #tier-list in Dx2 Liberation Discord Server or update the Wiki page by clicking the demons name at the top.");
             eb.WithUrl(url);
