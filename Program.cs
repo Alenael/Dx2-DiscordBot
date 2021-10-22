@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -25,7 +26,11 @@ namespace Dx2_DiscordBot
         private List<RetrieverBase> Retrievers = new List<RetrieverBase>();
 
         public static bool IsRunning = false;
-        
+
+        private string BannedUsersFileName = "bannedusers.txt";
+        private List<string> BannedUsers = new List<string>();
+        private List<string> Admins = new List<string>() { "Alenael#1801", "Arisu#7114" };
+
         //Main Entry Point
         public static void Main(string[] args)
             => new Program().MainAsync().GetAwaiter().GetResult();
@@ -46,6 +51,9 @@ namespace Dx2_DiscordBot
                 _client.Log += Logger.LogAsync;
                 _client.Ready += ReadyAsync;
                 _client.MessageReceived += MessageReceivedAsync;
+
+                //Load Blocked Users
+                LoadBlockedUsers();
 
                 //Add all our Retrievers to our list
                 Retrievers.Add(new DemonRetriever(_client));
@@ -72,6 +80,30 @@ namespace Dx2_DiscordBot
             }
         }
 
+        private void LoadBlockedUsers()
+        {
+            if (File.Exists(BannedUsersFileName))
+            {
+                var bannedUsersAllText = File.ReadAllText(BannedUsersFileName);
+
+                if (bannedUsersAllText != "")
+                {
+                    var bannedUsers = bannedUsersAllText.Split(",");
+
+                    foreach (var bannedUser in bannedUsers)
+                        BannedUsers.Add(bannedUser);
+                }
+            }
+            else            
+                File.WriteAllText(BannedUsersFileName, "");            
+        }
+
+        private void SaveBlockedUsers()
+        {
+            var text = String.Join(",", BannedUsers);
+            File.WriteAllText(BannedUsersFileName, text);
+        }
+
         // The Ready event indicates that the client has opened a
         // connection and it is now safe to access the cache.
         private async Task ReadyAsync()
@@ -91,8 +123,6 @@ namespace Dx2_DiscordBot
             }
         }
 
-        private List<ulong> BannedUsers = new List<ulong>() { 241520603977351168 };
-
         // This is not the recommended way to write a bot - consider
         // reading over the Commands Framework sample.
         private async Task MessageReceivedAsync(SocketMessage message)
@@ -101,10 +131,55 @@ namespace Dx2_DiscordBot
             if (message.Author.Id == _client.CurrentUser.Id)
                 return;
 
-            if (BannedUsers.Contains(message.Author.Id))
+            if (message.Content.StartsWith("!dx2banlist") && Admins.Contains(message.Author.ToString()))
             {
-                //if (_client.GetChannel(message.Channel.Id) is IMessageChannel chnl)                
-                //    await chnl.SendMessageAsync("Nah!");              
+                if (_client.GetChannel(message.Channel.Id) is IMessageChannel chnl)
+                    if (BannedUsers.Count == 0)
+                        await chnl.SendMessageAsync("No Users Banned at this time!");
+                    else
+                        await chnl.SendMessageAsync(String.Join(",", BannedUsers));
+            }
+            else if (message.Content.StartsWith("!dx2ban") && Admins.Contains(message.Author.ToString()))
+            {
+                var items = message.Content.Split("!dx2ban");
+
+                if (BannedUsers.Contains(items[1].Trim()))
+                {
+                    if (_client.GetChannel(message.Channel.Id) is IMessageChannel chnl)
+                        await chnl.SendMessageAsync($"{items[1].Trim()} is already banned.");
+                }
+                else
+                {
+                    await Logger.LogAsync($"{items[1].Trim()} was banned by {message.Author.ToString()}");
+                    BannedUsers.Add(items[1].Trim());
+                    SaveBlockedUsers();
+
+                    if (_client.GetChannel(message.Channel.Id) is IMessageChannel chnl)
+                        await chnl.SendMessageAsync($"{items[1].Trim()} has been banned from using bot! :(");
+                }
+            }
+            else if (message.Content.StartsWith("!dx2unban") && Admins.Contains(message.Author.ToString()))
+            {                
+                var items = message.Content.Split("!dx2unban");
+                if (BannedUsers.Contains(items[1].Trim()))
+                {
+                    await Logger.LogAsync($"{items[1].Trim()} was un banned by {message.Author.ToString()}");
+                    BannedUsers.Remove(items[1].Trim());
+                    SaveBlockedUsers();
+                    if (_client.GetChannel(message.Channel.Id) is IMessageChannel chnl)
+                        await chnl.SendMessageAsync($"{items[1].Trim()} has been un banned from using bot! :)");
+                }
+                else
+                {
+                    if (_client.GetChannel(message.Channel.Id) is IMessageChannel chnl)
+                        await chnl.SendMessageAsync($"{items[1].Trim()} has not been banned.");
+                }
+            }
+
+
+
+            if (BannedUsers.Contains(message.Author.ToString()))
+            {
                 await Logger.LogAsync(message.Author.Username + " tried to use a command but was denied.");
                 return;
             }
