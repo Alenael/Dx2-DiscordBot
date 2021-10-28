@@ -305,7 +305,7 @@ namespace Dx2_DiscordBot
             Skill2 + "\n" +
             AwakenSkill, true);
 
-            eb.AddField(Talent + ":", Effect, false);
+            eb.AddField(Talent + ":", Effect == "" ? "-" : Effect, false);
             
             var panelInfo1 = "";
             var panelInfo2 = "";
